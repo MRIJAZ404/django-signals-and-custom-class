@@ -1,0 +1,13 @@
+class Rect: #Created a class....
+    def __init__(self, length: int, width: int): # passed a parameter Length and width in integer
+        self.length = length
+        self.width = width
+
+    def __iter__(self):  
+        yield {"length": self.length} # We can even use return  function using 'Return' but Yield consumes less memory
+        yield {"width": self.width}
+
+# Usage
+rectangle = Rect(length=int(input("Enter a length: ")), width=int(input("Enter a width: "))) # Enter the values in rect class
+for attribute in rectangle:# We can use while loop and Exception handling, For loop provided more readability
+    print(attribute) 

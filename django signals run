@@ -1,0 +1,26 @@
+#Do django signals run in the same thread as the caller? Please support your answer with a code snippet that conclusively proves your stance. 
+#The code does not need to be elegant and production ready, we just need to understand your logic.
+
+
+# signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import threading
+
+@receiver(post_save)
+def print_thread_name(sender, instance, **kwargs): #The print_thread_name function is connected to the post_save signal, which gets triggered when a new MyModel instance is saved.
+    print(f"Signal received in thread: {threading.current_thread().name}") #In the signal handler, we print the thread's name using threading.current_thread().name
+
+# models.py
+from django.db import models
+
+class MyModel(models.Model):#When the create_model_instance view is accessed, it creates a MyModel instance, which triggers the post_save signal.
+    name = models.CharField(max_length=100)
+
+# views.py
+from django.shortcuts import render
+from .models import MyModel
+
+def create_model_instance(request):
+    instance = MyModel.objects.create(name="Test Instance")
+    return render(request, 'index.html') #the Html code will be rendered

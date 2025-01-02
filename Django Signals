@@ -1,0 +1,19 @@
+#Django signals are executed synchronously by default.
+# This means that when a signal is sent, all connected receivers (signal handlers) are executed immediately
+# in the same thread and execution flow as the sender.
+import time
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+# Signal handler
+@receiver(post_save, sender=User)
+def my_signal_handler(sender, instance, **kwargs): #The my_signal_handler function runs immediately and blocks further execution until it finishes (5-second delay here).
+    print("Signal handler started.")
+    time.sleep(5)  # Simulating a delay
+    print("Signal handler finished.")
+
+# Simulate a save operation
+print("Before creating user.")
+user = User.objects.create(username="testuser") #When User.objects.create() is called, it triggers the post_save signal
+print("User creation complete.")#Only after the signal handler completes does the print("User creation complete.") execute

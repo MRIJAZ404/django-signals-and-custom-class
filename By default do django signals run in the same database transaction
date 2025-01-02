@@ -1,0 +1,41 @@
+#Yes, by default, Django signals run in the same database transaction as the caller. Django signals like post_save and pre_save are connected to database operations, 
+#and if the signal is triggered during a transaction, 
+#it will run within that same transaction. 
+# If the transaction is rolled back, the signal's changes will also be rolled back.
+
+# signals.py
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db import transaction
+from django.db import IntegrityError
+from .models import MyModel
+
+@receiver(post_save)
+def handle_post_save(sender, instance, **kwargs): #The handle_post_save function is connected to the post_save signal, which triggers after saving a MyModel instance.
+    print(f"Signal handler started for: {instance.name}")
+    try:
+        # Simulating an exception that causes the transaction to roll back
+        if instance.name == "Test Instance":
+            raise IntegrityError("Simulating an error in the signal")
+    except IntegrityError: #Inside the signal handler, we simulate an exception (IntegrityError). When the exception occurs, we explicitly call transaction.
+        #set_rollback(True) to roll back the transaction, which means the database changes (including the creation of the model instance) should be reverted.
+        transaction.set_rollback(True)  # Rollback the transaction explicitly
+        print("Transaction rolled back in signal.")
+
+# models.py
+from django.db import models
+
+class MyModel(models.Model): 
+    name = models.CharField(max_length=100)
+
+# views.py
+from django.shortcuts import render
+from .models import MyModel
+
+def create_model_instance(request):#When the create_model_instance view is called, it creates a MyModel instance.
+    #If the instance’s name is "Test Instance," the error will be raised inside the signal, and the transaction will be rolled back.
+    try:
+        instance = MyModel.objects.create(name="Test Instance")
+    except IntegrityError:
+        print("IntegrityError: The transaction was rolled back.")
+    return render(request, 'index.html')
